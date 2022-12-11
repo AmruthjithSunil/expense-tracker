@@ -1,19 +1,44 @@
-let amount = document.getElementById('amount');
-let description = document.getElementById('description');
 let category = document.getElementById('category');
-let form = document.getElementById('form');
-let options = document.getElementsByClassName('option');
 let expenseList = document.getElementById('expense-list');
-form.addEventListener('submit', addExpense);
-for(let i=0; i<options.length; i++){
-    options[i].addEventListener('click', (e) => {
-        category.textContent = options[i].textContent;
+
+[...document.getElementsByClassName('option')].forEach(option => {
+    option.addEventListener('click', (e) => {
+        category.textContent = option.textContent;
     })
-}
+});
 
 for(let i=0; i<localStorage.length; i++){
-    let li = document.createElement('li');
     let expense = JSON.parse(localStorage.getItem(localStorage.key(i)));
+    expenseList.appendChild(createLi(expense));
+}
+
+document.getElementById('form').addEventListener('submit', addExpense);
+
+function addExpense(e){
+    e.preventDefault();
+
+    let expense = {
+        amount: document.getElementById('amount').value,
+        description: document.getElementById('description').value,
+        category: category.textContent
+    }
+
+    if(missingInputs(expense))
+        return;
+
+    expenseList.appendChild(createLi(expense));
+    
+    let expenseString = JSON.stringify(expense);
+    let key = `${expense.description}`;
+    localStorage.setItem(key, expenseString);
+    
+    document.getElementById('amount').value = '';
+    document.getElementById('description').value = '';
+    category.textContent = 'Categories';
+}
+
+function createLi(expense) {
+    let li = document.createElement('li');
     li.appendChild(document.createTextNode(`${expense.amount}-${expense.category}-${expense.description}`));
     let delBtn = document.createElement('button');
     delBtn.textContent = 'Delete Expense';
@@ -29,15 +54,7 @@ for(let i=0; i<localStorage.length; i++){
     editBtn.classList.add('btn-warning');
     li.appendChild(editBtn);
     editBtn.addEventListener('click', editLi);
-    expenseList.appendChild(li);
-}
-
-let delBtn = document.getElementsByClassName('del');
-let editBtn = document.getElementsByClassName('edit');
-
-for(let i=0; i<delBtn.length; i++){
-    delBtn[i].addEventListener('click', deleteLi);
-    editBtn[i].addEventListener('click', editLi);
+    return li;
 }
 
 function deleteLi(e) {
@@ -55,38 +72,21 @@ function editLi(e) {
     e.path[1].remove();
 }
 
-function addExpense(e){
-    e.preventDefault();
-    let expense = {
-        amount: amount.value,
-        description: description.value,
-        category: category.textContent
-    }
-    console.log(`${expense.amount}-${expense.category}-${expense.description}`);
+function missingInputs(expense){
+    let missingInputs = document.getElementById('missing-inputs');
+    missingInputs.textContent = '';
+
+    if(expense.amount === '')
+        missingInputs.textContent += 'Amount is missing.';
+
+    if(expense.description === '')
+        missingInputs.textContent += ' Description is missing.';
+
+    if(expense.category === 'Categories')
+        missingInputs.textContent += ' Choose a category.';
     
-    let li = document.createElement('li');
-    li.appendChild(document.createTextNode(`${expense.amount}-${expense.category}-${expense.description}`));
-    let delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete Expense';
-    delBtn.classList.add('del');
-    delBtn.classList.add('btn');
-    delBtn.classList.add('btn-danger');
-    li.appendChild(delBtn);
-    delBtn.addEventListener('click', deleteLi);
-    let editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit Expense';
-    editBtn.classList.add('edit');
-    editBtn.classList.add('btn');
-    editBtn.classList.add('btn-warning');
-    li.appendChild(editBtn);
-    editBtn.addEventListener('click', editLi);
-    expenseList.appendChild(li);
-
-    let expenseString = JSON.stringify(expense);
-    let key = `${expense.description}`;
-    localStorage.setItem(key, expenseString);
-
-    amount.value = '';
-    description.value = '';
-    category.textContent = 'Categories';
+    if(missingInputs.textContent == '')
+        return false;
+    else
+        return true;
 }
