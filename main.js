@@ -8,7 +8,7 @@ let expenseList = document.getElementById('expense-list');
 });
 
 for(let i=0; i<localStorage.length; i++){
-    let expense = JSON.parse(localStorage.getItem(localStorage.key(i)));
+    const expense = JSON.parse(localStorage.getItem(localStorage.key(i)));
     expenseList.appendChild(createLi(expense));
 }
 
@@ -17,20 +17,17 @@ document.getElementById('form').addEventListener('submit', addExpense);
 function addExpense(e){
     e.preventDefault();
 
-    let expense = {
+    const expense = {
         amount: document.getElementById('amount').value,
         description: document.getElementById('description').value,
         category: category.textContent
     }
 
-    if(missingInputs(expense))
+    if(isInputsMissing(expense))
         return;
 
     expenseList.appendChild(createLi(expense));
-    
-    let expenseString = JSON.stringify(expense);
-    let key = `${expense.description}`;
-    localStorage.setItem(key, expenseString);
+    localStorage.setItem(JSON.stringify(expense), JSON.stringify(expense));
     
     document.getElementById('amount').value = '';
     document.getElementById('description').value = '';
@@ -38,41 +35,60 @@ function addExpense(e){
 }
 
 function createLi(expense) {
-    let li = document.createElement('li');
-    li.appendChild(document.createTextNode(`${expense.amount}-${expense.category}-${expense.description}`));
-    let delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete Expense';
-    delBtn.classList.add('del');
-    delBtn.classList.add('btn');
-    delBtn.classList.add('btn-danger');
-    li.appendChild(delBtn);
-    delBtn.addEventListener('click', deleteLi);
-    let editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit Expense';
-    editBtn.classList.add('edit');
-    editBtn.classList.add('btn');
-    editBtn.classList.add('btn-warning');
-    li.appendChild(editBtn);
-    editBtn.addEventListener('click', editLi);
+    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;
+    
+    const li = document.createElement('li');
+    li.appendChild(document.createTextNode(textContent));
+
+    const deleteButton = createDeleteButton();
+    li.appendChild(deleteButton);
+
+    const editButton = createEditButton();
+    li.appendChild(editButton);
+
     return li;
 }
 
+function createDeleteButton(){
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete Expense';
+    deleteButton.classList.add('del');
+    deleteButton.classList.add('btn');
+    deleteButton.classList.add('btn-danger');
+    deleteButton.addEventListener('click', deleteLi);
+    return deleteButton;
+}
+
+function createEditButton(){
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Edit Expense';
+    editButton.classList.add('edit');
+    editButton.classList.add('btn');
+    editButton.classList.add('btn-warning');
+    editButton.addEventListener('click', editLi);
+    return editButton;
+}
+
 function deleteLi(e) {
-    let key = e.path[1].textContent.slice(0, -26).split("-")[2];
-    localStorage.removeItem(key);
+    const textContent = e.path[1].textContent.slice(0, -26).split("-");
+    const expense = {
+        amount: textContent[0],
+        description: textContent[2],
+        category: textContent[1]
+    }
+    localStorage.removeItem(JSON.stringify(expense));
     e.path[1].remove();
+    return expense;
 }
 
 function editLi(e) {
-    let key = e.path[1].textContent.slice(0, -26).split("-")[2];
-    localStorage.removeItem(key);
-    amount.value = e.path[1].textContent.slice(0, -26).split("-")[0];
-    description.value = e.path[1].textContent.slice(0, -26).split("-")[2];
-    category.textContent = e.path[1].textContent.slice(0, -26).split("-")[1];
-    e.path[1].remove();
+    const expense = deleteLi(e);
+    amount.value = expense.amount;
+    description.value = expense.description;
+    category.textContent = expense.category;
 }
 
-function missingInputs(expense){
+function isInputsMissing(expense){
     let missingInputs = document.getElementById('missing-inputs');
     missingInputs.textContent = '';
 
