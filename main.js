@@ -1,51 +1,53 @@
-let category = document.getElementById('category');
-let expenseList = document.getElementById('expense-list');
+const amount = document.getElementById('amount');
+const description = document.getElementById('description');
+const category = document.getElementById('category');
+const expenseList = document.getElementById('expense-list');
+const endpointId = '7acda206c4fb4492947eb719e3662858';
+const serverLink = `https://crudcrud.com/api/${endpointId}/expense`;
 
-[...document.getElementsByClassName('option')].forEach(option => {
-    option.addEventListener('click', (e) => {
-        category.textContent = option.textContent;
+addEventListener('DOMContentLoaded', () => {
+    [...document.getElementsByClassName('option')].forEach(option => {
+        option.addEventListener('click', (e) => {
+            category.textContent = option.textContent;
+        })
+    });
+    axios(serverLink)
+    .then(res => {
+        const expenseJSON = res.data;
+        for(let i=0; i<expenseJSON.length; i++){
+            expenseList.appendChild(createLi(expenseJSON[i]));
+        }
     })
 });
-
-for(let i=0; i<localStorage.length; i++){
-    const expense = JSON.parse(localStorage.getItem(localStorage.key(i)));
-    expenseList.appendChild(createLi(expense));
-}
 
 document.getElementById('form').addEventListener('submit', addExpense);
 
 function addExpense(e){
     e.preventDefault();
-
     const expense = {
-        amount: document.getElementById('amount').value,
-        description: document.getElementById('description').value,
+        amount: amount.value,
+        description: description.value,
         category: category.textContent
     }
-
-    if(isInputsMissing(expense))
+    if(isInputsMissing(expense)){
         return;
-
+    }    
     expenseList.appendChild(createLi(expense));
-    localStorage.setItem(JSON.stringify(expense), JSON.stringify(expense));
-    
+    axios.post(serverLink, expense)
+    .then(res => console.log(res))
+    .catch(err => console.log(err));    
     document.getElementById('amount').value = '';
     document.getElementById('description').value = '';
     category.textContent = 'Categories';
 }
 
 function createLi(expense) {
-    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;
-    
+    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;    
     const li = document.createElement('li');
     li.appendChild(document.createTextNode(textContent));
-
-    const deleteButton = createDeleteButton();
-    li.appendChild(deleteButton);
-
-    const editButton = createEditButton();
-    li.appendChild(editButton);
-
+    li.setAttribute('id', expense._id);
+    li.appendChild(createDeleteButton());
+    li.appendChild(createEditButton());
     return li;
 }
 
@@ -76,7 +78,7 @@ function deleteLi(e) {
         description: textContent[2],
         category: textContent[1]
     }
-    localStorage.removeItem(JSON.stringify(expense));
+    axios.delete(`${serverLink}/${e.path[1].id}`)
     e.path[1].remove();
     return expense;
 }
@@ -91,18 +93,17 @@ function editLi(e) {
 function isInputsMissing(expense){
     let missingInputs = document.getElementById('missing-inputs');
     missingInputs.textContent = '';
-
-    if(expense.amount === '')
+    if(expense.amount === ''){
         missingInputs.textContent += 'Amount is missing.';
-
-    if(expense.description === '')
+    }
+    if(expense.description === ''){
         missingInputs.textContent += ' Description is missing.';
-
-    if(expense.category === 'Categories')
+    }
+    if(expense.category === 'Categories'){
         missingInputs.textContent += ' Choose a category.';
-    
-    if(missingInputs.textContent == '')
+    }
+    if(missingInputs.textContent == ''){
         return false;
-    else
-        return true;
+    }
+    return true;
 }
