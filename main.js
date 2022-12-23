@@ -2,7 +2,7 @@ const amount = document.getElementById('amount');
 const description = document.getElementById('description');
 const category = document.getElementById('category');
 const expenseList = document.getElementById('expense-list');
-const endpointId = '7acda206c4fb4492947eb719e3662858';
+const endpointId = 'bd4cea8ece944937bc265d22f59b977a';
 const serverLink = `https://crudcrud.com/api/${endpointId}/expense`;
 
 addEventListener('DOMContentLoaded', () => {
@@ -11,13 +11,19 @@ addEventListener('DOMContentLoaded', () => {
             category.textContent = option.textContent;
         })
     });
-    axios(serverLink)
-    .then(res => {
-        const expenseJSON = res.data;
-        for(let i=0; i<expenseJSON.length; i++){
-            expenseList.appendChild(createLi(expenseJSON[i]));
+
+    const getData = async () => {
+        try{
+            const res = await axios.get(serverLink);
+            const expenseJSON = res.data;
+            for(let i=0; i<expenseJSON.length; i++){
+                expenseList.appendChild(createLi(expenseJSON[i]));
+            }
+        }catch(err){
+            console.log(err);
         }
-    })
+    };
+    getData();
 });
 
 document.getElementById('form').addEventListener('submit', addExpense);
@@ -33,9 +39,17 @@ function addExpense(e){
         return;
     }    
     expenseList.appendChild(createLi(expense));
-    axios.post(serverLink, expense)
-    .then(res => console.log(res))
-    .catch(err => console.log(err));    
+
+    const postData = async () => {
+        try{
+            const res = await axios.post(serverLink, expense);
+            console.log(res);
+        }catch(err){
+            console.log(err);
+        }
+    }
+    postData();
+
     document.getElementById('amount').value = '';
     document.getElementById('description').value = '';
     category.textContent = 'Categories';
@@ -78,7 +92,16 @@ function deleteLi(e) {
         description: textContent[2],
         category: textContent[1]
     }
-    axios.delete(`${serverLink}/${e.path[1].id}`)
+    
+    const deleteData = async () => {
+        try{
+            const res = await axios.delete(`${serverLink}/${e.path[1].id}`);
+            console.log(res);
+        }catch(err){
+            console.log(err);
+        }
+    };
+    deleteData();
     e.path[1].remove();
     return expense;
 }
