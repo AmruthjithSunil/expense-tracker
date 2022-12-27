@@ -2,7 +2,7 @@ const amount = document.getElementById('amount');
 const description = document.getElementById('description');
 const category = document.getElementById('category');
 const expenseList = document.getElementById('expense-list');
-const endpointId = 'bd4cea8ece944937bc265d22f59b977a';
+const endpointId = 'e1ff4cd9712d4c6990512de274016515';
 const serverLink = `https://crudcrud.com/api/${endpointId}/expense`;
 
 addEventListener('DOMContentLoaded', () => {
@@ -15,9 +15,9 @@ addEventListener('DOMContentLoaded', () => {
     const getData = async () => {
         try{
             const res = await axios.get(serverLink);
-            const expenseJSON = res.data;
-            for(let i=0; i<expenseJSON.length; i++){
-                expenseList.appendChild(createLi(expenseJSON[i]));
+            const expenses = res.data;
+            for(let i=0; i<expenses.length; i++){
+                expenseList.appendChild(createLi(expenses[i]));
             }
         }catch(err){
             console.log(err);
@@ -30,7 +30,7 @@ document.getElementById('form').addEventListener('submit', addExpense);
 
 function addExpense(e){
     e.preventDefault();
-    const expense = {
+    let expense = {
         amount: amount.value,
         description: description.value,
         category: category.textContent
@@ -38,12 +38,13 @@ function addExpense(e){
     if(isInputsMissing(expense)){
         return;
     }    
-    expenseList.appendChild(createLi(expense));
-
+    
     const postData = async () => {
         try{
             const res = await axios.post(serverLink, expense);
             console.log(res);
+            expense = res.data;
+            expenseList.appendChild(createLi(expense));
         }catch(err){
             console.log(err);
         }
@@ -56,7 +57,7 @@ function addExpense(e){
 }
 
 function createLi(expense) {
-    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;    
+    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;  
     const li = document.createElement('li');
     li.appendChild(document.createTextNode(textContent));
     li.setAttribute('id', expense._id);
