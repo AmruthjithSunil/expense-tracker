@@ -4,6 +4,7 @@ const category = document.getElementById('category');
 const expenseList = document.getElementById('expense-list');
 const endpointId = 'e1ff4cd9712d4c6990512de274016515';
 const serverLink = `https://crudcrud.com/api/${endpointId}/expense`;
+let id = null;
 
 addEventListener('DOMContentLoaded', () => {
     [...document.getElementsByClassName('option')].forEach(option => {
@@ -41,9 +42,16 @@ function addExpense(e){
     
     const postData = async () => {
         try{
-            const res = await axios.post(serverLink, expense);
+            let res;
+            if(id == null){
+                res = await axios.post(serverLink, expense);
+                expense = res.data;
+            }else{
+                res = await axios.put(`${serverLink}/${id}`, expense);
+                expense._id = id;
+                id = null;
+            }
             console.log(res);
-            expense = res.data;
             expenseList.appendChild(createLi(expense));
         }catch(err){
             console.log(err);
@@ -57,10 +65,9 @@ function addExpense(e){
 }
 
 function createLi(expense) {
-    const textContent = `${expense.amount}-${expense.category}-${expense.description}`;  
     const li = document.createElement('li');
-    li.appendChild(document.createTextNode(textContent));
-    li.setAttribute('id', expense._id);
+    li.textContent = `${expense.amount}-${expense.category}-${expense.description}`;  
+    li.id = expense._id;
     li.appendChild(createDeleteButton());
     li.appendChild(createEditButton());
     return li;
@@ -69,9 +76,7 @@ function createLi(expense) {
 function createDeleteButton(){
     const deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete Expense';
-    deleteButton.classList.add('del');
-    deleteButton.classList.add('btn');
-    deleteButton.classList.add('btn-danger');
+    deleteButton.className = 'del btn btn-danger';
     deleteButton.addEventListener('click', deleteLi);
     return deleteButton;
 }
@@ -79,21 +84,12 @@ function createDeleteButton(){
 function createEditButton(){
     const editButton = document.createElement('button');
     editButton.textContent = 'Edit Expense';
-    editButton.classList.add('edit');
-    editButton.classList.add('btn');
-    editButton.classList.add('btn-warning');
+    editButton.className = 'edit btn btn-warning';
     editButton.addEventListener('click', editLi);
     return editButton;
 }
 
 function deleteLi(e) {
-    const textContent = e.path[1].textContent.slice(0, -26).split("-");
-    const expense = {
-        amount: textContent[0],
-        description: textContent[2],
-        category: textContent[1]
-    }
-    
     const deleteData = async () => {
         try{
             const res = await axios.delete(`${serverLink}/${e.path[1].id}`);
@@ -104,14 +100,15 @@ function deleteLi(e) {
     };
     deleteData();
     e.path[1].remove();
-    return expense;
 }
 
 function editLi(e) {
-    const expense = deleteLi(e);
-    amount.value = expense.amount;
-    description.value = expense.description;
-    category.textContent = expense.category;
+    const contents = e.path[1].textContent.slice(0, -26).split('-');
+    amount.value = contents[0];
+    description.value = contents[2];
+    category.textContent = contents[1];
+    id = e.path[1].id;
+    e.path[1].remove();
 }
 
 function isInputsMissing(expense){
