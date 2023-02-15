@@ -3,6 +3,7 @@ const description = document.getElementById("description");
 const category = document.getElementById("category");
 const expenseList = document.getElementById("expense-list");
 const serverLink = `http://localhost:4000`;
+let id = null;
 
 addEventListener("DOMContentLoaded", () => {
   const addingEventListernerToOptionsDropdown = () => {
@@ -58,13 +59,30 @@ function addExpense(e) {
     }
   };
 
+  const patchExpense = async () => {
+    try {
+      const res = await axios.patch(`${serverLink}/${id}`, expense);
+      expense = res.data;
+      expenseList.appendChild(createLi(expense));
+      console.log("Expense Edited");
+      console.log(expense);
+      id = null;
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const settingInputValuesToDefault = () => {
     amount.value = "";
     description.value = "";
     category.textContent = "Categories";
   };
 
-  postNewExpense();
+  if (id === null) {
+    postNewExpense();
+  } else {
+    patchExpense();
+  }
   settingInputValuesToDefault();
 }
 
@@ -75,6 +93,7 @@ function createLi(expense) {
   li.className = "mt-3";
   li.style.width = "500px";
   li.appendChild(createDeleteButton());
+  li.appendChild(createEditButton());
   return li;
 }
 
@@ -98,6 +117,24 @@ function deleteLi(e) {
     }
   };
   deleteData();
+  e.target.parentElement.remove();
+}
+
+function createEditButton() {
+  const deleteButton = document.createElement("button");
+  deleteButton.textContent = "Edit";
+  deleteButton.className = "edit btn btn-warning float-end";
+  deleteButton.addEventListener("click", editLi);
+  return deleteButton;
+}
+
+function editLi(e) {
+  const contents = e.target.parentElement.textContent.slice(0, -10).split("-");
+  console.log(contents);
+  amount.value = contents[0];
+  description.value = contents[2];
+  category.textContent = contents[1];
+  id = e.target.parentElement.id;
   e.target.parentElement.remove();
 }
 
